@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="JavaLab is a browser-based Java coding environment for the classroom.">
+    <title>JavaLab</title>
+    <script>
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem("javalab-theme") === "dark" ? "dark" : "light";
+      } catch {
+        document.documentElement.dataset.theme = "light";
+      }
+    </script>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cjrtnc.leaningtech.com" crossorigin>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css" onerror="this.onerror=null;this.href='./vendor/codemirror/lib/codemirror.css'">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/material-darker.css" onerror="this.onerror=null;this.href='./vendor/codemirror/theme/material-darker.css'">
+    <link rel="stylesheet" href="./styles.css?v=1">
+  </head>
+  <body>
+    <main class="workspace">
+      <section class="project-panel" aria-label="Project files">
+        <div class="panel-top">
+          <a class="brand" href="./" aria-label="JavaLab home">
+            <span class="brand-mark" aria-hidden="true">J_</span>
+            <span>JavaLab</span>
+          </a>
+          <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode"><span aria-hidden="true">☾</span></button>
+        </div>
+
+        <div class="file-panel-heading">
+          <span>Files</span>
+          <button id="new-file" class="icon-button" type="button" title="Create file" aria-label="Create a new file">+</button>
+        </div>
+        <nav class="file-nav" aria-label="Project files"><ul id="file-list" class="file-list"></ul></nav>
+        <div class="file-actions">
+          <button id="rename-file" class="text-button" type="button">Rename</button>
+          <button id="delete-file" class="text-button danger" type="button">Delete</button>
+        </div>
+        <div class="project-actions">
+          <button id="paste-source" class="secondary-button" type="button">Paste source</button>
+          <button id="reset-project" class="secondary-button danger" type="button">Reset project</button>
+        </div>
+      </section>
+
+      <section class="editor-panel" aria-label="Code editor">
+        <button id="copy-file" class="copy-code-button" type="button" title="Copy the active file">Copy code</button>
+        <label class="visually-hidden" for="code-editor">Java source code</label>
+        <textarea id="code-editor" spellcheck="false"></textarea>
+      </section>
+
+      <section class="io-panel" aria-label="Compilation and program output">
+        <section class="execution-inputs">
+          <div class="field-group">
+            <div class="section-heading"><label for="program-args">Command-line arguments</label><span>optional</span></div>
+            <input id="program-args" type="text" placeholder='For example: Ada "Grace Hopper"' autocomplete="off" spellcheck="false">
+          </div>
+          <div class="field-group">
+            <div class="section-heading"><label for="stdin-input">Standard input</label><span>optional</span></div>
+            <textarea id="stdin-input" placeholder="Input for Scanner or System.in, one value per line…" spellcheck="false"></textarea>
+          </div>
+        </section>
+
+        <div class="run-controls">
+          <button id="run-code" class="run-button" type="button" disabled><span aria-hidden="true">▶</span> Compile &amp; run</button>
+          <button id="stop-code" class="stop-button" type="button" disabled><span aria-hidden="true">■</span> Stop</button>
+          <button id="download-jar" class="download-button" type="button" disabled>Download JAR</button>
+          <span class="timeout-note">5 second limit</span>
+        </div>
+
+        <section class="output-section compiler-section" aria-labelledby="compiler-title">
+          <div class="section-heading output-heading">
+            <div><p class="eyebrow">Compiler</p><h2 id="compiler-title">Build output</h2></div>
+            <span id="compiler-summary" class="result-chip">Not run</span>
+          </div>
+          <pre id="compiler-output" class="output" tabindex="0" aria-live="polite"><span class="output-placeholder">Compiler messages will appear here.</span></pre>
+        </section>
+
+        <section class="output-section program-section" aria-labelledby="program-title">
+          <div class="section-heading output-heading">
+            <div><p class="eyebrow">Console</p><h2 id="program-title">Program output</h2></div>
+            <button id="clear-output" class="text-button" type="button">Clear</button>
+          </div>
+          <pre id="program-output" class="output" tabindex="0" aria-live="polite"><span class="output-placeholder">Run your code to see its output here.</span></pre>
+        </section>
+      </section>
+    </main>
+
+    <footer class="status-bar">
+      <div id="runtime-status" class="runtime-status is-loading" role="status" aria-live="polite"><span class="status-dot" aria-hidden="true"></span><span>Loading Java 8…</span></div>
+      <p>Runs locally in your browser · Powered by <a href="https://cheerpj.com/" target="_blank" rel="noopener">CheerpJ</a></p>
+      <div class="document-status"><span id="file-size">0 B</span><span aria-hidden="true">·</span><span id="save-status">Saved on this device</span></div>
+    </footer>
+
+    <script src="./browser-entry.js?v=1"></script>
+  </body>
+</html>
