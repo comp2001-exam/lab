@@ -2,7 +2,7 @@
 
 const STORAGE_KEY = "comp2001-tt2-project-v1";
 const RUN_TIMEOUT_MS = 5_000;
-const BUILD_TIMEOUT_MS = 30_000;
+const BUILD_TIMEOUT_MS = 120_000;
 const LIMITS = Object.freeze({ maxFiles: 20, maxFileBytes: 100 * 1024, maxProjectBytes: 500 * 1024, maxStdinBytes: 50 * 1024 });
 const DEFAULT_PROJECT = Object.freeze({
   activeFile: "Equipment.java",
@@ -209,7 +209,7 @@ function runProject() {
     programArgs,
     stdin: project.stdin,
   });
-  timeoutId = window.setTimeout(() => stopProject("Compilation stopped after 30 seconds."), BUILD_TIMEOUT_MS);
+  timeoutId = window.setTimeout(() => stopProject("Compilation stopped after 2 minutes. Click Compile & run again."), BUILD_TIMEOUT_MS);
 }
 
 function finishRun(message) {
