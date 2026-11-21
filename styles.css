@@ -81,7 +81,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, pre:focus-vis
 .timer:not([data-state="idle"]) .timer-setup { display: none; }
 .timer[data-state="done"] #timer-start { display: none; }
 .timer[data-level="critical"] .timer-display, .timer[data-state="done"] .timer-display { color: #fff; background: var(--error); }
-.timer[data-state="done"] .timer-display { animation: flash 1s steps(2, jump-none) infinite; }
+.timer[data-state="done"] .timer-display { background: var(--mun-red); animation: flash 3s ease-in-out infinite; }
 .timer[data-state="paused"] .timer-display { opacity: .7; }
 
 /* Workspace and resizable panels */
@@ -253,21 +253,22 @@ h2 { margin: 0; color: var(--text); font-size: .74rem; font-weight: 750; letter-
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 @keyframes pulse { to { opacity: .35; } }
 @keyframes flash { 50% { opacity: .35; } }
-@keyframes times-up-bg { 0%, 49.9% { background: rgba(228, 0, 43, .9); } 50%, 100% { background: rgba(100, 20, 32, .9); } }
-@keyframes times-up-pop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.06); opacity: 1; } 100% { transform: scale(1); } }
-@keyframes times-up-frame { 50% { border-color: transparent; } }
+@keyframes times-up-bg { 50% { background-color: rgba(165, 156, 148, .9); } }
+@keyframes times-up-pop { 0% { transform: scale(.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes times-up-glow { 50% { box-shadow: 0 0 0 18px rgba(255, 255, 255, .35), 0 20px 60px rgba(0, 0, 0, .3); } }
+@keyframes times-up-frame { 50% { border-color: rgba(134, 38, 51, .25); } }
 
 /* Time's up: a full-window alert, then a flashing frame after it is closed. */
-.times-up { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: rgba(228, 0, 43, .9); animation: times-up-bg 1s linear infinite; }
+.times-up { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: rgba(134, 38, 51, .9); animation: times-up-bg 4s ease-in-out infinite; }
 .times-up[hidden], .times-up-frame[hidden] { display: none; }
-.times-up-card { width: min(560px, 100%); padding: 36px 28px 30px; border: 6px solid var(--mun-red); border-radius: 16px; color: #231F20; background: #fff; text-align: center; box-shadow: 0 20px 60px rgba(0, 0, 0, .45); animation: times-up-pop .45s ease-out; }
-.times-up-icon { font-size: 3.4rem; line-height: 1; }
-.times-up-card h2 { margin: 10px 0 8px; color: #E4002B; font-size: clamp(2.6rem, 9vw, 4.5rem); font-weight: 900; line-height: 1; letter-spacing: -.01em; text-transform: uppercase; }
-.times-up-card p { margin: 0 0 22px; font-size: 1.15rem; font-weight: 600; }
+.times-up-card { width: min(540px, 100%); padding: 36px 28px 30px; border-radius: 20px; color: #231F20; background: #fff; text-align: center; box-shadow: 0 0 0 6px rgba(255, 255, 255, .35), 0 20px 60px rgba(0, 0, 0, .3); animation: times-up-pop .6s ease-out, times-up-glow 4s ease-in-out infinite; }
+.times-up-icon { font-size: 3.2rem; line-height: 1; }
+.times-up-card h2 { margin: 12px 0 10px; color: #862633; font-size: clamp(2.4rem, 8vw, 4rem); font-weight: 800; line-height: 1.05; letter-spacing: 0; text-transform: none; }
+.times-up-card p { margin: 0 0 24px; color: #231F20; font-size: 1.15rem; line-height: 1.45; }
 #times-up-close { min-width: 140px; height: 44px; border: 0; border-radius: 999px; color: #fff; background: var(--mun-red); font-size: 1rem; font-weight: 750; cursor: pointer; }
 #times-up-close:hover { background: var(--mun-red-dark); }
 #times-up-close:focus-visible { outline: 3px solid #307FE2; outline-offset: 3px; }
-.times-up-frame { position: fixed; inset: 0; z-index: 900; border: 10px solid #E4002B; pointer-events: none; animation: times-up-frame 1s steps(2, jump-none) infinite; }
+.times-up-frame { position: fixed; inset: 0; z-index: 900; border: 10px solid #862633; pointer-events: none; animation: times-up-frame 3s ease-in-out infinite; }
 
 @media (max-width: 1100px) {
   .editor-hint { display: none; }

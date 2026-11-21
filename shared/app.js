@@ -937,12 +937,12 @@ function renderTimer() {
   elements.timer.dataset.level = critical ? "critical" : "normal";
   elements.timerDisplay.textContent = timer.state === "done" ? "Time's up" : formatDuration(remaining);
   elements.timerStart.textContent = timer.state === "running" ? "Pause" : timer.state === "paused" ? "Resume" : "Start";
-  document.title = timer.state === "done" ? "⏰ Time's up · JavaLab"
+  document.title = timer.state === "done" ? "🌿 Time's up · JavaLab"
     : timer.state === "running" ? `${formatDuration(remaining)} · JavaLab` : "JavaLab";
   renderTimesUp();
 }
 
-// When time runs out, cover the window with a flashing alert. After OK, a flashing red
+// When time runs out, cover the window with a slowly pulsing alert. After OK, a pulsing
 // frame stays around the whole window (and the tab title blinks) until the timer is reset.
 function renderTimesUp() {
   const done = timer.state === "done";
@@ -959,7 +959,7 @@ function renderTimesUp() {
     let on = true;
     titleBlink = window.setInterval(() => {
       on = !on;
-      document.title = on ? "⏰ Time's up · JavaLab" : "⏰ TIME'S UP ⏰";
+      document.title = on ? "🌿 Time's up · JavaLab" : "Time's up";
     }, 1000);
   } else if (!done && titleBlink) {
     clearInterval(titleBlink);
