@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://cjrtnc.leaningtech.com" crossorigin>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.css" onerror="this.onerror=null;this.href='./vendor/codemirror/lib/codemirror.css'">
-    <link rel="stylesheet" href="./styles.css?v=5">
+    <link rel="stylesheet" href="./styles.css?v=7">
   </head>
   <body>
     <header class="topbar">
@@ -39,33 +39,29 @@
           <button id="timer-start" class="timer-button primary" type="button">Start</button>
           <button id="timer-reset" class="timer-button" type="button">Reset</button>
         </div>
+        <div class="menu">
+          <button id="menu-toggle" class="icon-button" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="app-menu" title="More actions" aria-label="More actions"><span aria-hidden="true">⋯</span></button>
+          <div id="app-menu" class="menu-list" role="menu" hidden>
+            <button id="menu-new-file" type="button" role="menuitem">New file</button>
+            <button id="rename-file" type="button" role="menuitem">Rename file</button>
+            <button id="delete-file" class="danger" type="button" role="menuitem">Delete file</button>
+            <hr>
+            <button id="reset-layout" type="button" role="menuitem">Reset layout</button>
+            <button id="reset-project" class="danger" type="button" role="menuitem">Reset project</button>
+          </div>
+        </div>
         <button id="layout-toggle" class="icon-button" type="button" title="Move the output panel below the editor" aria-label="Move the output panel below the editor"><span aria-hidden="true">⬓</span></button>
         <button id="theme-toggle" class="icon-button" type="button" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode"><span aria-hidden="true">☾</span></button>
       </div>
     </header>
 
     <main id="workspace" class="workspace">
-      <section class="project-panel" aria-label="Project files">
-        <div class="panel-heading">
-          <span>Files</span>
-          <button id="new-file" class="small-icon-button" type="button" title="Create a new file" aria-label="Create a new file">+</button>
-        </div>
-        <nav class="file-nav" aria-label="Project files"><ul id="file-list" class="file-list"></ul></nav>
-        <div class="file-actions">
-          <button id="rename-file" class="text-button" type="button">Rename</button>
-          <button id="delete-file" class="text-button danger" type="button">Delete</button>
-        </div>
-        <div class="project-actions">
-          <button id="reset-layout" class="secondary-button" type="button">Reset layout</button>
-          <button id="reset-project" class="secondary-button danger" type="button">Reset project</button>
-        </div>
-      </section>
-
-      <div class="gutter gutter-files" data-resize="files" role="separator" aria-orientation="vertical" aria-label="Resize the files panel" title="Drag to resize. Double-click to reset."></div>
-
       <section class="editor-panel" aria-label="Code editor">
         <div class="editor-toolbar">
-          <span id="editor-file-name" class="editor-file-name">Main.java</span>
+          <div class="file-tabs" role="tablist" aria-label="Project files">
+            <div id="file-list" class="file-tab-list"></div>
+            <button id="new-file" class="tab-add" type="button" title="Create a new file" aria-label="Create a new file">+</button>
+          </div>
           <div class="editor-actions">
             <button id="toggle-comment" class="tool-button" type="button" title="Comment or uncomment the selected lines (Ctrl+/ or Cmd+/)"><span class="tool-glyph" aria-hidden="true">//</span> Toggle comment</button>
             <button id="copy-file" class="tool-button" type="button" title="Copy the active file">Copy code</button>
@@ -125,6 +121,16 @@
 
     <div id="diag-tooltip" class="diag-tooltip" role="tooltip" hidden></div>
 
-    <script src="./browser-entry.js?v=4"></script>
+    <div id="times-up-frame" class="times-up-frame" aria-hidden="true" hidden></div>
+    <div id="times-up" class="times-up" role="alertdialog" aria-modal="true" aria-labelledby="times-up-title" aria-describedby="times-up-text" hidden>
+      <div class="times-up-card">
+        <div class="times-up-icon" aria-hidden="true">⏱</div>
+        <h2 id="times-up-title">Time's up</h2>
+        <p id="times-up-text">The timer has run out. Stop working now.</p>
+        <button id="times-up-close" type="button">OK</button>
+      </div>
+    </div>
+
+    <script src="./browser-entry.js?v=6"></script>
   </body>
 </html>

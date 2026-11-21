@@ -18,7 +18,7 @@ const DEFAULT_PROJECT = Object.freeze({
   args: "",
   stdin: "",
 });
-const DEFAULT_LAYOUT = Object.freeze({ position: "right", filesWidth: 210, ioWidth: 440, ioHeight: 300, outputFraction: 0.4 });
+const DEFAULT_LAYOUT = Object.freeze({ position: "right", ioWidth: 440, ioHeight: 300, outputFraction: 0.4 });
 
 const elements = {
   workspace: document.querySelector("#workspace"),
@@ -30,7 +30,12 @@ const elements = {
   deleteFile: document.querySelector("#delete-file"),
   resetLayout: document.querySelector("#reset-layout"),
   resetProject: document.querySelector("#reset-project"),
-  editorFileName: document.querySelector("#editor-file-name"),
+  menuToggle: document.querySelector("#menu-toggle"),
+  menu: document.querySelector("#app-menu"),
+  menuNewFile: document.querySelector("#menu-new-file"),
+  timesUp: document.querySelector("#times-up"),
+  timesUpClose: document.querySelector("#times-up-close"),
+  timesUpFrame: document.querySelector("#times-up-frame"),
   toggleComment: document.querySelector("#toggle-comment"),
   copyFile: document.querySelector("#copy-file"),
   problemStatus: document.querySelector("#problem-status"),
@@ -84,6 +89,7 @@ let project = loadProject();
 let layout = loadLayout();
 let timer = loadTimer();
 let timerInterval = null;
+let titleBlink = 0;
 let runner = null;
 let runnerReady = false;
 let running = false;
@@ -122,10 +128,7 @@ function bindEvents() {
   elements.themeToggle.addEventListener("click", toggleTheme);
   elements.layoutToggle.addEventListener("click", toggleLayoutPosition);
   elements.newFile.addEventListener("click", createFile);
-  elements.renameFile.addEventListener("click", renameActiveFile);
-  elements.deleteFile.addEventListener("click", deleteActiveFile);
-  elements.resetLayout.addEventListener("click", resetLayout);
-  elements.resetProject.addEventListener("click", resetProject);
+  bindMenu();
   // Keep the editor's selection when the button is pressed, then comment the selected lines.
   elements.toggleComment.addEventListener("mousedown", (event) => event.preventDefault());
   elements.toggleComment.addEventListener("click", () => toggleCommentInEditor(editor));
@@ -548,33 +551,81 @@ function renderProject() {
 }
 
 function renderFiles() {
+  const canClose = project.files.length > 1;
   elements.fileList.replaceChildren(...project.files.map((file) => {
-    const item = document.createElement("li");
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `file-button${file.name === project.activeFile ? " active" : ""}`;
-    button.setAttribute("aria-current", file.name === project.activeFile ? "page" : "false");
-    const type = document.createElement("span");
-    type.className = "file-type";
-    type.textContent = "J";
+    const active = file.name === project.activeFile;
+    const tab = document.createElement("div");
+    tab.className = `file-tab${active ? " active" : ""}`;
+    tab.setAttribute("role", "tab");
+    tab.setAttribute("aria-selected", String(active));
+    tab.tabIndex = active ? 0 : -1;
+    tab.title = `${file.name} (double-click to rename)`;
     const name = document.createElement("span");
     name.className = "file-name";
     name.textContent = file.name;
-    button.append(type, name);
+    tab.append(name);
     const problems = diagnosticsByFile.get(file.name)?.length || 0;
     if (problems) {
       const badge = document.createElement("span");
       badge.className = "file-badge";
       badge.textContent = String(problems);
       badge.title = `${problems} ${problems === 1 ? "problem" : "problems"}`;
-      button.append(badge);
+      tab.append(badge);
     }
-    button.addEventListener("click", () => selectFile(file.name));
-    item.append(button);
-    return item;
+    if (canClose) {
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "tab-close";
+      close.textContent = "×";
+      close.title = `Delete ${file.name}`;
+      close.setAttribute("aria-label", `Delete ${file.name}`);
+      close.addEventListener("click", (event) => {
+        event.stopPropagation();
+        selectFile(file.name);
+        deleteActiveFile();
+      });
+      tab.append(close);
+    }
+    tab.addEventListener("click", () => selectFile(file.name));
+    tab.addEventListener("dblclick", (event) => {
+      if (event.target.closest(".tab-close")) return;
+      selectFile(file.name);
+      renameActiveFile();
+    });
+    tab.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); selectFile(file.name); }
+    });
+    return tab;
   }));
-  elements.deleteFile.disabled = project.files.length <= 1;
-  elements.editorFileName.textContent = project.activeFile || "";
+  elements.deleteFile.disabled = !canClose;
+  elements.fileList.querySelector(".file-tab.active")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+
+function bindMenu() {
+  const open = (show) => {
+    elements.menu.hidden = !show;
+    elements.menuToggle.setAttribute("aria-expanded", String(show));
+  };
+  elements.menuToggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    open(elements.menu.hidden);
+  });
+  document.addEventListener("click", (event) => {
+    if (!elements.menu.hidden && !event.target.closest(".menu")) open(false);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !elements.menu.hidden) { open(false); elements.menuToggle.focus(); }
+  });
+  const actions = [
+    [elements.menuNewFile, createFile],
+    [elements.renameFile, renameActiveFile],
+    [elements.deleteFile, deleteActiveFile],
+    [elements.resetLayout, resetLayout],
+    [elements.resetProject, resetProject],
+  ];
+  for (const [button, action] of actions) {
+    button.addEventListener("click", () => { open(false); action(); });
+  }
 }
 
 function renderEditor() {
@@ -715,7 +766,6 @@ function applyLayout() {
   const root = document.documentElement;
   if (layout.position === "bottom") root.dataset.layout = "bottom";
   else delete root.dataset.layout;
-  root.style.setProperty("--files-w", `${layout.filesWidth}px`);
   root.style.setProperty("--io-w", `${layout.ioWidth}px`);
   root.style.setProperty("--io-h", `${layout.ioHeight}px`);
   root.style.setProperty("--output-frac", `${(layout.outputFraction * 100).toFixed(1)}%`);
@@ -747,7 +797,6 @@ function resetLayout() {
 function bindGutter(gutter) {
   const kind = gutter.dataset.resize;
   gutter.addEventListener("dblclick", () => {
-    if (kind === "files") layout.filesWidth = DEFAULT_LAYOUT.filesWidth;
     if (kind === "io") { layout.ioWidth = DEFAULT_LAYOUT.ioWidth; layout.ioHeight = DEFAULT_LAYOUT.ioHeight; }
     if (kind === "output") layout.outputFraction = DEFAULT_LAYOUT.outputFraction;
     applyLayout();
@@ -780,13 +829,10 @@ function bindGutter(gutter) {
 function resizeFromPointer(kind, x, y) {
   const box = elements.workspace.getBoundingClientRect();
   const clamp = (value, low, high) => Math.round(Math.min(Math.max(value, low), Math.max(low, high)));
-  if (kind === "files") {
-    const otherWidth = layout.position === "bottom" ? 0 : layout.ioWidth;
-    layout.filesWidth = clamp(x - box.left, 130, Math.min(420, box.width - otherWidth - 300));
-  } else if (kind === "io" && layout.position === "bottom") {
+  if (kind === "io" && layout.position === "bottom") {
     layout.ioHeight = clamp(box.bottom - y, 140, box.height - 140);
   } else if (kind === "io") {
-    layout.ioWidth = clamp(box.right - x, 260, box.width - layout.filesWidth - 300);
+    layout.ioWidth = clamp(box.right - x, 260, box.width - 320);
   } else if (kind === "output") {
     const split = elements.outputSplit.getBoundingClientRect();
     const fraction = layout.position === "bottom" ? (x - split.left) / split.width : (y - split.top) / split.height;
@@ -809,6 +855,11 @@ function initializeTimer() {
     resetTimer();
   });
   elements.timerMinutes.addEventListener("keydown", (event) => { if (event.key === "Enter") startTimer(); });
+  elements.timesUpClose.addEventListener("click", () => {
+    timer.alertDismissed = true;
+    storeTimer();
+    renderTimer();
+  });
   renderTimer();
   if (timer.state === "running") timerInterval = window.setInterval(tickTimer, 250);
 }
@@ -886,8 +937,34 @@ function renderTimer() {
   elements.timer.dataset.level = critical ? "critical" : "normal";
   elements.timerDisplay.textContent = timer.state === "done" ? "Time's up" : formatDuration(remaining);
   elements.timerStart.textContent = timer.state === "running" ? "Pause" : timer.state === "paused" ? "Resume" : "Start";
-  document.title = timer.state === "done" ? "Time's up · JavaLab"
+  document.title = timer.state === "done" ? "⏰ Time's up · JavaLab"
     : timer.state === "running" ? `${formatDuration(remaining)} · JavaLab` : "JavaLab";
+  renderTimesUp();
+}
+
+// When time runs out, cover the window with a flashing alert. After OK, a flashing red
+// frame stays around the whole window (and the tab title blinks) until the timer is reset.
+function renderTimesUp() {
+  const done = timer.state === "done";
+  const showAlert = done && !timer.alertDismissed;
+  const wasHidden = elements.timesUp.hidden;
+  elements.timesUp.hidden = !showAlert;
+  elements.timesUpFrame.hidden = !done || showAlert;
+  if (showAlert && wasHidden) {
+    elements.menu.hidden = true;
+    window.setTimeout(() => elements.timesUpClose.focus(), 0);
+  }
+  if (!showAlert && !wasHidden) editor.focus();
+  if (done && !titleBlink) {
+    let on = true;
+    titleBlink = window.setInterval(() => {
+      on = !on;
+      document.title = on ? "⏰ Time's up · JavaLab" : "⏰ TIME'S UP ⏰";
+    }, 1000);
+  } else if (!done && titleBlink) {
+    clearInterval(titleBlink);
+    titleBlink = 0;
+  }
 }
 
 function formatDuration(milliseconds) {

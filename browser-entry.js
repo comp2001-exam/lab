@@ -10,7 +10,7 @@ loadApplication();
 
 function loadApplication() {
   const script = document.createElement("script");
-  script.src = "./bootstrap.js?v=6";
+  script.src = "./bootstrap.js?v=7";
   script.onerror = () => {
     const status = document.querySelector("#runtime-status span:last-child");
     if (status) status.textContent = "Application failed to load";
