@@ -6,6 +6,6 @@ Features: live compiler checks with red underlines, a countdown timer, a toggle-
 
 Allow these in LockDown Browser: this site, cjrtnc.leaningtech.com (the CheerpJ runtime) and cdn.jsdelivr.net (the editor).
 
-The runner (`browser/runtime/javalab-runner-2.jar`) is built from `runner-src/` with `./build-runner.sh`. Give the jar a new name when it changes, because GitHub Pages caches it.
+The runner (`browser/runtime/javalab-runner-3.jar`) is built from `runner-src/` with `./build-runner.sh`. Give the jar a new name when it changes, because GitHub Pages caches it.
 
 The Memorial University logo in `img/` belongs to Memorial University of Newfoundland.

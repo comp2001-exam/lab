@@ -1,6 +1,6 @@
 "use strict";
 
-importScripts("../shared/runtime-path.js?v=2", "https://cjrtnc.leaningtech.com/5.0/loader.js");
+importScripts("../shared/runtime-path.js?v=3", "https://cjrtnc.leaningtech.com/5.0/loader.js");
 
 const JAVA_VERSION = 8;
 let activeRunId = null;
@@ -34,16 +34,7 @@ async function handle(request) {
       ...argumentsForRunner,
     );
 
-    let jar = null;
-    if (request.type === "run") {
-      try {
-        const blob = await cjFileBlob(`/files/javalab/${request.runId}/javalab.jar`);
-        jar = await blob.arrayBuffer();
-      } catch {
-        // Compilation failures have no downloadable artifact.
-      }
-    }
-    post({ type: "complete", mode: request.type, runId: request.runId, exitCode, jar }, jar ? [jar] : []);
+    post({ type: "complete", mode: request.type, runId: request.runId, exitCode });
   } catch (error) {
     post({ type: "runner-error", runId: request.runId, message: error instanceof Error ? error.message : String(error) });
   }

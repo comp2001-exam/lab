@@ -20,10 +20,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.jar.Attributes;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.tools.Diagnostic;
@@ -86,11 +82,6 @@ public final class Runner {
         emit("compile-result", compiled ? "success" : "failure");
         if (!compiled || "check".equals(mode)) return;
 
-        try {
-            createJar(classesDirectory, projectDirectory.resolve("javalab.jar"), mainClass);
-        } catch (IOException error) {
-            emit("compiler-error", "Compiled, but the JAR could not be created: " + error.getMessage() + "\n");
-        }
         runProgram(classesDirectory, mainClass, programArgs, stdin);
     }
 
@@ -285,21 +276,6 @@ public final class Runner {
             System.setIn(originalIn);
         }
         emit("program-result", success ? "success" : "failure");
-    }
-
-    private static void createJar(Path classesDirectory, Path jarPath, String mainClass) throws IOException {
-        Manifest manifest = new Manifest();
-        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-        manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, mainClass);
-        try (JarOutputStream jar = new JarOutputStream(Files.newOutputStream(jarPath), manifest);
-             Stream<Path> paths = Files.walk(classesDirectory)) {
-            for (Path path : paths.filter(Files::isRegularFile).collect(Collectors.toList())) {
-                String name = classesDirectory.relativize(path).toString().replace('\\', '/');
-                jar.putNextEntry(new JarEntry(name));
-                Files.copy(path, jar);
-                jar.closeEntry();
-            }
-        }
     }
 
     /** One editor file: its name and text. */

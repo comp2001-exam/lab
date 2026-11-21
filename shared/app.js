@@ -38,7 +38,6 @@ const elements = {
   stdin: document.querySelector("#stdin-input"),
   run: document.querySelector("#run-code"),
   stop: document.querySelector("#stop-code"),
-  downloadJar: document.querySelector("#download-jar"),
   clearOutput: document.querySelector("#clear-output"),
   outputSplit: document.querySelector("#output-split"),
   compilerOutput: document.querySelector("#compiler-output"),
@@ -93,7 +92,6 @@ let runState = null;
 let timeoutId = null;
 let saveTimeout = null;
 let suppressEditorChange = false;
-let jarUrl = null;
 
 // Live checking: the latest diagnostics for each file, and the editor marks that show them.
 let diagnosticsByFile = new Map();
@@ -117,7 +115,6 @@ function bindEvents() {
     const file = activeFile();
     if (!file) return;
     file.content = editor.getValue();
-    invalidateArtifact();
     updateFileSize();
     scheduleSave();
     scheduleCheck();
@@ -136,7 +133,6 @@ function bindEvents() {
   elements.problemStatus.addEventListener("click", jumpToNextProblem);
   elements.run.addEventListener("click", runProject);
   elements.stop.addEventListener("click", () => stopProject("Execution stopped."));
-  elements.downloadJar.addEventListener("click", downloadJar);
   elements.clearOutput.addEventListener("click", () => setOutput(elements.programOutput, "", "Run your code to see its output here."));
   elements.compilerOutput.addEventListener("click", (event) => {
     const link = event.target.closest(".diag-link");
@@ -157,7 +153,7 @@ function createRunner() {
   elements.run.disabled = true;
   setRuntimeStatus("loading", "Loading Java…");
   setProblemStatus("busy", "Loading Java…");
-  runner = new Worker(`./browser/runner-worker.js?v=6&instance=${Date.now()}`);
+  runner = new Worker(`./browser/runner-worker.js?v=7&instance=${Date.now()}`);
   runner.addEventListener("message", handleRunnerMessage);
   runner.addEventListener("error", handleRunnerError);
 }
@@ -403,7 +399,6 @@ function runProject() {
   }
 
   clearOutputs();
-  invalidateArtifact();
   running = true;
   activeRunId = `run-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const files = project.files.map((file) => ({ name: file.name, content: file.content }));
@@ -458,10 +453,6 @@ function finishRun(message) {
     setCompilerError("Java stopped before the build finished. JavaLab is restarting Java; try again in a moment.");
     createRunner();
     return;
-  }
-  if (message.jar instanceof ArrayBuffer && message.jar.byteLength > 0) {
-    jarUrl = URL.createObjectURL(new Blob([message.jar], { type: "application/java-archive" }));
-    elements.downloadJar.disabled = false;
   }
   if (runState.compiled && !elements.programOutput.textContent.trim()) {
     setOutput(elements.programOutput, "Program finished without producing output.");
@@ -633,7 +624,6 @@ function createFile() {
   project.files.push({ name: trimmed, content: `public class ${className}\n{\n    \n}\n` });
   project.activeFile = trimmed;
   renderProject();
-  invalidateArtifact();
   scheduleSave();
   scheduleCheck();
 }
@@ -650,7 +640,6 @@ function renameActiveFile() {
   file.name = trimmed;
   project.activeFile = trimmed;
   renderFiles();
-  invalidateArtifact();
   scheduleSave();
   scheduleCheck();
 }
@@ -664,7 +653,6 @@ function deleteActiveFile() {
   diagnosticsByFile.delete(file.name);
   project.activeFile = project.files[Math.min(index, project.files.length - 1)].name;
   renderProject();
-  invalidateArtifact();
   scheduleSave();
   scheduleCheck();
 }
@@ -686,23 +674,8 @@ function resetProject() {
   diagnosticsByFile = new Map();
   renderProject();
   clearOutputs();
-  invalidateArtifact();
   saveProject();
   scheduleCheck();
-}
-
-function downloadJar() {
-  if (!jarUrl) return;
-  const link = document.createElement("a");
-  link.href = jarUrl;
-  link.download = "javalab-project.jar";
-  link.click();
-}
-
-function invalidateArtifact() {
-  if (jarUrl) URL.revokeObjectURL(jarUrl);
-  jarUrl = null;
-  elements.downloadJar.disabled = true;
 }
 
 /* ---------- Theme ---------- */
