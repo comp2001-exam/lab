@@ -1,32 +1,33 @@
 "use strict";
 
-importScripts("../shared/runtime-path.js", "https://cjrtnc.leaningtech.com/4.3/loader.js");
+importScripts("../shared/runtime-path.js?v=2", "https://cjrtnc.leaningtech.com/5.0/loader.js");
 
-let initialized = false;
+const JAVA_VERSION = 8;
 let activeRunId = null;
 const initialization = initializeRuntime();
+let queue = Promise.resolve();
 
-self.addEventListener("message", async (event) => {
-  if (event.data?.type !== "run") return;
+self.addEventListener("message", (event) => {
   const request = event.data;
-  activeRunId = request.runId;
+  if (request?.type !== "run" && request?.type !== "check") return;
+  // CheerpJ runs one main method at a time, so requests wait their turn.
+  queue = queue.then(() => handle(request)).catch(() => {});
+});
 
+async function handle(request) {
+  activeRunId = request.runId;
   try {
     await initialization;
-    for (const file of request.files) {
-      const path = `/str/${file.name}`;
-      try { cheerpOSRemoveStringFile(path); } catch { /* The first run has nothing to remove. */ }
-      cheerpOSAddStringFile(path, file.content);
-    }
-
     const argumentsForRunner = [
+      request.type,
       request.runId,
-      request.mainClass,
-      encodeBase64(request.stdin),
-      String(request.programArgs.length),
-      ...request.programArgs,
-      ...request.files.map((file) => `/str/${file.name}`),
+      request.mainClass || "",
+      encodeBase64(request.stdin || ""),
+      String((request.programArgs || []).length),
+      ...(request.programArgs || []),
     ];
+    for (const file of request.files) argumentsForRunner.push(file.name, encodeBase64(file.content));
+
     const exitCode = await cheerpjRunMain(
       "dev.javalab.Runner",
       JavaLabRuntimePaths.getRunnerClassPath(self.location.href),
@@ -34,28 +35,28 @@ self.addEventListener("message", async (event) => {
     );
 
     let jar = null;
-    try {
-      const blob = await cjFileBlob(`/files/javalab/${request.runId}/javalab.jar`);
-      jar = await blob.arrayBuffer();
-    } catch {
-      // Compilation failures intentionally have no downloadable artifact.
+    if (request.type === "run") {
+      try {
+        const blob = await cjFileBlob(`/files/javalab/${request.runId}/javalab.jar`);
+        jar = await blob.arrayBuffer();
+      } catch {
+        // Compilation failures have no downloadable artifact.
+      }
     }
-    post({ type: "complete", runId: request.runId, exitCode, jar }, jar ? [jar] : []);
+    post({ type: "complete", mode: request.type, runId: request.runId, exitCode, jar }, jar ? [jar] : []);
   } catch (error) {
     post({ type: "runner-error", runId: request.runId, message: error instanceof Error ? error.message : String(error) });
   }
-});
+}
 
 async function initializeRuntime() {
-  if (initialized) return;
   await cheerpjInit({
-    version: 8,
+    version: JAVA_VERSION,
     status: "none",
     overrideDocumentBase: new URL("./", self.location.href).href,
     natives: { Java_dev_javalab_Runner_emit },
   });
-  initialized = true;
-  post({ type: "ready" });
+  post({ type: "ready", version: JAVA_VERSION });
 }
 
 function Java_dev_javalab_Runner_emit(_library, channel, value) {
@@ -65,7 +66,9 @@ function Java_dev_javalab_Runner_emit(_library, channel, value) {
 function encodeBase64(value) {
   const bytes = new TextEncoder().encode(value);
   let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
+  for (let index = 0; index < bytes.length; index += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+  }
   return btoa(binary);
 }
 

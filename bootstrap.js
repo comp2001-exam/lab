@@ -9,6 +9,7 @@ const scripts = [
   "mode/clike/clike.js",
   "addon/edit/matchbrackets.js",
   "addon/edit/closebrackets.js",
+  "addon/comment/comment.js",
 ];
 
 initialize();
@@ -16,7 +17,7 @@ initialize();
 async function initialize() {
   try {
     for (const path of scripts) await loadWithFallback(path);
-    await loadScript("./shared/app.js?v=4");
+    await loadScript("./shared/app.js?v=5");
   } catch (error) {
     const status = document.querySelector("#runtime-status span:last-child");
     if (status) status.textContent = "Editor failed to load";
